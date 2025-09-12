@@ -44,12 +44,30 @@ const Recommendations: React.FC<RecommendationsProps> = ({ transactions, currenc
   const loadYouTubeContent = async () => {
     setIsLoadingVideos(true);
     try {
+      // Import the retry functions to ensure we get fresh content
+      const { fetchFinanceVideosWithRetry, fetchMoneySavingTipsWithRetry } = await import('../services/youtubeService');
+      
       const [videos, tips] = await Promise.all([
-        fetchFinanceVideos(),
-        fetchMoneySavingTips()
+        fetchFinanceVideosWithRetry(transactions),
+        fetchMoneySavingTipsWithRetry(transactions)
       ]);
-      setFinanceVideos(videos);
-      setSavingTips(tips);
+      
+      // Only update state if we got valid results
+      if (videos && videos.length > 0) {
+        setFinanceVideos(videos);
+      }
+      
+      if (tips && tips.length > 0) {
+        setSavingTips(tips);
+      }
+      
+      // If we didn't get any videos, try to reload after a delay
+      if ((!videos || videos.length === 0) && (!tips || tips.length === 0)) {
+        console.log('No videos returned, scheduling retry...');
+        setTimeout(() => {
+          loadYouTubeContent();
+        }, 5000); // Retry after 5 seconds
+      }
     } catch (error) {
       console.error('Failed to load YouTube content:', error);
     } finally {
