@@ -12,86 +12,78 @@ export interface YouTubeVideo {
 // Fallback data for when the YouTube API quota is exceeded
 const fallbackFinanceVideos: YouTubeVideo[] = [
   {
-    id: "QFaFIcGhPoM",
-    title: "How to Save Money: 8 Tips to Spend Less & Save More",
-    description: "Learn practical tips for saving money and building wealth over time.",
-    thumbnail: "https://i.ytimg.com/vi/QFaFIcGhPoM/mqdefault.jpg",
-    channelTitle: "The Financial Diet",
+    id: "udHzPjxq2lg",
+    title: "How To Save $10,000 FAST",
+    description: "Practical strategies to save money quickly and efficiently.",
+    thumbnail: "https://i.ytimg.com/vi/udHzPjxq2lg/mqdefault.jpg",
+    channelTitle: "Graham Stephan",
     publishedAt: "2023-01-15T14:00:00Z"
   },
   {
-    id: "M3-ij_7jYgY",
-    title: "Personal Finance Basics In 8 Minutes",
-    description: "A quick overview of the most important personal finance concepts everyone should know.",
-    thumbnail: "https://i.ytimg.com/vi/M3-ij_7jYgY/mqdefault.jpg",
-    channelTitle: "Financial Education",
+    id: "KhwtGd2qQLY",
+    title: "Secrets to Getting Rich in 2023 | Ultimate Guide",
+    description: "Comprehensive guide to building wealth and financial independence.",
+    thumbnail: "https://i.ytimg.com/vi/KhwtGd2qQLY/mqdefault.jpg",
+    channelTitle: "WhiteBoard Finance",
     publishedAt: "2023-02-20T16:30:00Z"
   },
   {
-    id: "kJSAzVZRkqQ",
-    title: "Budgeting for Beginners - How to Make a Budget From Scratch",
-    description: "Learn how to create and stick to a budget that works for your lifestyle and goals.",
-    thumbnail: "https://i.ytimg.com/vi/kJSAzVZRkqQ/mqdefault.jpg",
-    channelTitle: "The Budget Mom",
+    id: "rJZlK-WhS4k",
+    title: "Top 5 Personal Finance Tips for 2023",
+    description: "Essential tips to master your money and secure your financial future.",
+    thumbnail: "https://i.ytimg.com/vi/rJZlK-WhS4k/mqdefault.jpg",
+    channelTitle: "Explore with Tayyab",
     publishedAt: "2023-03-10T12:45:00Z"
   },
   {
-    id: "u8vHEBZVGqU",
-    title: "5 Financial Planning Tips for Beginners",
-    description: "Essential financial planning advice for those just starting their financial journey.",
-    thumbnail: "https://i.ytimg.com/vi/u8vHEBZVGqU/mqdefault.jpg",
-    channelTitle: "Wealth Hacker",
+    id: "HQzoZfc3GwQ",
+    title: "How To Manage Your Money (50/30/20 Rule)",
+    description: "Learn the popular 50/30/20 budgeting rule to effectively manage your finances.",
+    thumbnail: "https://i.ytimg.com/vi/HQzoZfc3GwQ/mqdefault.jpg",
+    channelTitle: "WhiteBoard Finance",
     publishedAt: "2023-04-05T09:15:00Z"
   },
   {
-    id: "pN3htNBZPPA",
-    title: "How to Invest for Beginners",
-    description: "A beginner's guide to investing in the stock market and building wealth over time.",
-    thumbnail: "https://i.ytimg.com/vi/pN3htNBZPPA/mqdefault.jpg",
-    channelTitle: "Investing Made Simple",
+    id: "h2KvsHpcj7c",
+    title: "How to Create Wealth from ZERO in 2023 (7 Personal Finance Tips)",
+    description: "Strategies to build wealth from scratch using proven personal finance principles.",
+    thumbnail: "https://i.ytimg.com/vi/h2KvsHpcj7c/mqdefault.jpg",
+    channelTitle: "Better Wallet",
     publishedAt: "2023-05-12T18:20:00Z"
-  },
-  {
-    id: "7wDuITAi2O0",
-    title: "Debt Payoff Strategies That Actually Work",
-    description: "Effective strategies for paying off debt and achieving financial freedom.",
-    thumbnail: "https://i.ytimg.com/vi/7wDuITAi2O0/mqdefault.jpg",
-    channelTitle: "Debt Free Millennials",
-    publishedAt: "2023-06-08T15:10:00Z"
   }
 ];
 
 const fallbackSavingTips: YouTubeVideo[] = [
   {
-    id: "dBMVYxZCPWg",
-    title: "10 Money Saving Hacks You Need To Know",
-    description: "Quick and easy money saving hacks that can help you save hundreds each month.",
-    thumbnail: "https://i.ytimg.com/vi/dBMVYxZCPWg/mqdefault.jpg",
-    channelTitle: "Frugal Living",
+    id: "udHzPjxq2lg",
+    title: "How To Save $10,000 FAST",
+    description: "Practical strategies to save money quickly and efficiently.",
+    thumbnail: "https://i.ytimg.com/vi/udHzPjxq2lg/mqdefault.jpg",
+    channelTitle: "Graham Stephan",
     publishedAt: "2023-01-25T11:30:00Z"
   },
   {
-    id: "fIlNyeS_3Kc",
-    title: "Save $1000 in 30 Days Challenge",
-    description: "A step-by-step guide to saving your first $1000 in just one month.",
-    thumbnail: "https://i.ytimg.com/vi/fIlNyeS_3Kc/mqdefault.jpg",
-    channelTitle: "Budget Bytes",
+    id: "HQzoZfc3GwQ",
+    title: "How To Manage Your Money (50/30/20 Rule)",
+    description: "Learn the popular 50/30/20 budgeting rule to effectively manage your finances.",
+    thumbnail: "https://i.ytimg.com/vi/HQzoZfc3GwQ/mqdefault.jpg",
+    channelTitle: "WhiteBoard Finance",
     publishedAt: "2023-02-18T14:45:00Z"
   },
   {
-    id: "gJvzK2kHQzs",
-    title: "5 Money Saving Tricks That Actually Work",
-    description: "Proven strategies for saving money on everyday expenses without sacrificing quality of life.",
-    thumbnail: "https://i.ytimg.com/vi/gJvzK2kHQzs/mqdefault.jpg",
-    channelTitle: "Smart Money",
+    id: "rJZlK-WhS4k",
+    title: "Top 5 Personal Finance Tips for 2023",
+    description: "Essential tips to master your money and secure your financial future.",
+    thumbnail: "https://i.ytimg.com/vi/rJZlK-WhS4k/mqdefault.jpg",
+    channelTitle: "Explore with Tayyab",
     publishedAt: "2023-03-22T10:15:00Z"
   },
   {
-    id: "hL8TVgCYfms",
-    title: "How I Save 70% of My Income",
-    description: "Extreme saving strategies from someone who saves the majority of their income.",
-    thumbnail: "https://i.ytimg.com/vi/hL8TVgCYfms/mqdefault.jpg",
-    channelTitle: "Financial Independence",
+    id: "h2KvsHpcj7c",
+    title: "How to Create Wealth from ZERO in 2023 (7 Personal Finance Tips)",
+    description: "Strategies to build wealth from scratch using proven personal finance principles.",
+    thumbnail: "https://i.ytimg.com/vi/h2KvsHpcj7c/mqdefault.jpg",
+    channelTitle: "Better Wallet",
     publishedAt: "2023-04-30T16:20:00Z"
   }
 ];
