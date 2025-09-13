@@ -1,35 +1,34 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Theme = 'light' | 'dark';
 
 export const useTheme = () => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as Theme) || 'light';
-  });
+  const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    
-    // Add transition class before changing theme
-    root.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-    
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    
-    localStorage.setItem('theme', theme);
-    
-    // Remove transition after a delay to avoid affecting other animations
-    setTimeout(() => {
-      root.style.transition = '';
-    }, 300);
-  }, [theme]);
+    const loadTheme = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('theme');
+        if (saved) {
+          setTheme(saved as Theme);
+        }
+      } catch (error) {
+        console.error('Error loading theme:', error);
+      }
+    };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    loadTheme();
+  }, []);
+
+  const toggleTheme = async () => {
+    try {
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+      await AsyncStorage.setItem('theme', newTheme);
+    } catch (error) {
+      console.error('Error saving theme:', error);
+    }
   };
 
   return { theme, toggleTheme };
