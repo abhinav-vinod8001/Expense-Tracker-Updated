@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import Icon from 'react-native-vector-icons/Feather';
+import { ArrowLeft, MessageCircle, DollarSign, Clock, Info, TrendingUp, Settings, X } from 'lucide-react';
 
 interface MenuProps {
   isOpen: boolean;
@@ -9,217 +8,121 @@ interface MenuProps {
   onNavigate: (section: string) => void;
 }
 
+const menuItems = [
+  { id: 'chatbot', label: 'AI Chat Mode', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
+  { id: 'currency', label: 'Currency Selection', icon: DollarSign, description: 'Choose your preferred currency' },
+  { id: 'history', label: 'Transaction History', icon: Clock, description: 'View all your transactions' },
+  { id: 'about', label: 'About Us', icon: Info, description: 'Learn about the app' },
+  { id: 'recommendations', label: 'Recommendations', icon: TrendingUp, description: 'Get spending insights' },
+];
+
 const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [visible, setVisible] = useState(false);
+  const [animating, setAnimating] = useState(false);
 
-  const menuItems = [
-    { id: 'currency', label: 'Currency Selection', icon: 'dollar-sign', description: 'Choose your preferred currency' },
-    { id: 'history', label: 'Transaction History', icon: 'clock', description: 'View all your transactions' },
-    { id: 'about', label: 'About Us', icon: 'info', description: 'Learn about the app' },
-    { id: 'recommendations', label: 'Recommendations', icon: 'trending-up', description: 'Get spending insights' },
-  ];
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      // Trigger animation on next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimating(true));
+      });
+    } else {
+      setAnimating(false);
+      const timer = setTimeout(() => setVisible(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   const handleItemClick = (id: string) => {
     onNavigate(id);
     onClose();
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={isOpen}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} />
-        
-        <View style={[styles.menuPanel, isDark ? styles.darkMenuPanel : styles.lightMenuPanel]}>
-          {/* Header */}
-          <View style={[styles.header, styles.gradientHeader]}>
-            <Text style={styles.headerTitle}>Menu</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="x" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
+    <div className="fixed inset-0 z-50 flex">
+      {/* Menu Panel — slides from left */}
+      <div
+        className={`w-80 h-full flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${animating ? 'translate-x-0' : '-translate-x-full'
+          } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-blue-500">
+          <h2 className="text-xl font-bold text-white">Menu</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          >
+            <X size={20} className="text-white" />
+          </button>
+        </div>
 
-          {/* Menu Items */}
-          <ScrollView style={styles.menuContent}>
-            {menuItems.map((item) => (
-              <TouchableOpacity
+        {/* Menu Items */}
+        <div className="flex-1 overflow-y-auto py-4">
+          {menuItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <button
                 key={item.id}
-                onPress={() => handleItemClick(item.id)}
-                style={[styles.menuItem, isDark ? styles.darkMenuItem : styles.lightMenuItem]}
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center px-6 py-4 text-left transition-colors ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
+                  }`}
               >
-                <View style={[styles.iconContainer, isDark ? styles.darkIconContainer : styles.lightIconContainer]}>
-                  <Icon name={item.icon} size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, isDark ? styles.darkText : styles.lightText]}>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${isDark ? 'bg-gray-800' : 'bg-gray-100'
+                  }`}>
+                  <IconComponent size={20} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+                </div>
+                <div>
+                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {item.label}
-                  </Text>
-                  <Text style={[styles.menuItemDescription, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {item.description}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-          {/* Settings Section */}
-          <View style={[styles.settingsSection, isDark ? styles.darkBorder : styles.lightBorder]}>
-            <TouchableOpacity
-              onPress={() => handleItemClick('settings')}
-              style={[styles.menuItem, isDark ? styles.darkMenuItem : styles.lightMenuItem]}
-            >
-              <View style={[styles.iconContainer, isDark ? styles.darkIconContainer : styles.lightIconContainer]}>
-                <Icon name="settings" size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
-              </View>
-              <View style={styles.menuItemContent}>
-                <Text style={[styles.menuItemLabel, isDark ? styles.darkText : styles.lightText]}>
-                  Settings
-                </Text>
-                <Text style={[styles.menuItemDescription, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
-                  App preferences and theme
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+        {/* Settings Section */}
+        <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <button
+            onClick={() => handleItemClick('settings')}
+            className={`w-full flex items-center px-6 py-4 text-left transition-colors ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
+              }`}
+          >
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center mr-4 ${isDark ? 'bg-gray-800' : 'bg-gray-100'
+              }`}>
+              <Settings size={20} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+            </div>
+            <div>
+              <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Settings</p>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>App preferences and theme</p>
+            </div>
+          </button>
+        </div>
 
-          {/* Footer */}
-          <View style={[styles.footer, isDark ? styles.darkFooter : styles.lightFooter]}>
-            <Text style={[styles.footerText, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
-              Expense Tracker v2.0
-            </Text>
-          </View>
-        </View>
-      </View>
-    </Modal>
+        {/* Footer */}
+        <div className={`px-6 py-4 text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Expense Tracker v2.0
+          </p>
+        </div>
+      </div>
+
+      {/* Backdrop — right of the panel, fades in */}
+      <div
+        className={`flex-1 transition-opacity duration-300 ${animating ? 'bg-black/50 opacity-100' : 'bg-black/50 opacity-0'
+          }`}
+        onClick={onClose}
+      />
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  menuPanel: {
-    width: 320,
-    height: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  lightMenuPanel: {
-    backgroundColor: '#ffffff',
-  },
-  darkMenuPanel: {
-    backgroundColor: '#111827',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    backgroundColor: '#3b82f6',
-  },
-  gradientHeader: {
-    backgroundColor: '#3b82f6',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  closeButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  menuContent: {
-    flex: 1,
-    paddingVertical: 16,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  lightMenuItem: {
-    backgroundColor: 'transparent',
-  },
-  darkMenuItem: {
-    backgroundColor: 'transparent',
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  lightIconContainer: {
-    backgroundColor: '#f3f4f6',
-  },
-  darkIconContainer: {
-    backgroundColor: '#1f2937',
-  },
-  menuItemContent: {
-    flex: 1,
-  },
-  menuItemLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  menuItemDescription: {
-    fontSize: 12,
-  },
-  settingsSection: {
-    borderTopWidth: 1,
-  },
-  lightBorder: {
-    borderTopColor: '#e5e7eb',
-  },
-  darkBorder: {
-    borderTopColor: '#374151',
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  lightFooter: {
-    backgroundColor: '#f9fafb',
-  },
-  darkFooter: {
-    backgroundColor: '#1f2937',
-  },
-  footerText: {
-    fontSize: 12,
-  },
-  lightText: {
-    color: '#111827',
-  },
-  darkText: {
-    color: '#ffffff',
-  },
-  lightSecondaryText: {
-    color: '#6b7280',
-  },
-  darkSecondaryText: {
-    color: '#9ca3af',
-  },
-});
 
 export default Menu;

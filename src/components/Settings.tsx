@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Moon, Sun, DollarSign } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, DollarSign, Trash2 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import ToggleSwitch from './ToggleSwitch';
 import { currencyNames } from '../data/exchangeRates';
@@ -37,7 +37,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
               Customize how the app looks and feels
             </p>
           </div>
-          
+
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -58,17 +58,16 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
                 </div>
               </div>
               <div className="relative">
-                <ToggleSwitch 
-                  isOn={theme === 'dark'} 
+                <ToggleSwitch
+                  isOn={theme === 'dark'}
                   onToggle={toggleTheme}
                 />
                 {/* Ripple effect container */}
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-500 ${
-                    theme === 'dark' 
-                      ? 'bg-gray-900 w-96 h-96 opacity-100' 
-                      : 'bg-white w-0 h-0 opacity-0'
-                  }`} style={{ zIndex: -1 }} />
+                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-500 ${theme === 'dark'
+                    ? 'bg-gray-900 w-96 h-96 opacity-100'
+                    : 'bg-white w-0 h-0 opacity-0'
+                    }`} style={{ zIndex: -1 }} />
                 </div>
               </div>
             </div>
@@ -83,7 +82,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
               Choose the currency for displaying transaction totals in history
             </p>
           </div>
-          
+
           <div className="p-6">
             <div className="flex items-center space-x-4 mb-4">
               <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors duration-300">
@@ -112,12 +111,53 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
           </div>
         </div>
 
+        {/* Data Management */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Data Management</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Manage your local data
+            </p>
+          </div>
+
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg transition-colors duration-300">
+                  <Trash2 size={20} className="text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Clear Chat History
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Delete all AI conversation history
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear your chat history? This cannot be undone.')) {
+                    localStorage.removeItem('expense_tracker_chat_history');
+                    // Optional: Dispatch a custom event if we want other components to know immediately
+                    window.dispatchEvent(new Event('chat-history-cleared'));
+                    alert('Chat history cleared successfully.');
+                  }
+                }}
+                className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg font-medium transition-colors"
+              >
+                Clear History
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* App Info */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
           <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">App Information</h2>
           </div>
-          
+
           <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-gray-600 dark:text-gray-400">Version</span>
@@ -138,7 +178,7 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
           <h3 className="text-lg font-semibold mb-2">Privacy First</h3>
           <p className="text-sm opacity-90">
-            All your financial data is stored locally on your device. We don't collect, store, 
+            All your financial data is stored locally on your device. We don't collect, store,
             or share any of your personal information or transaction data.
           </p>
         </div>

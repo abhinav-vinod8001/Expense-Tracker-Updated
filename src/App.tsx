@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { StatusBar, SafeAreaView, StyleSheet } from 'react-native';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useTheme } from './hooks/useTheme';
 import { Transaction, AppState } from './types';
@@ -10,12 +9,13 @@ import History from './components/History';
 import AboutUs from './components/AboutUs';
 import Recommendations from './components/Recommendations';
 import Settings from './components/Settings';
+import ChatBot from './components/ChatBot';
 
 const initialState: AppState = {
   transactions: [],
   currency: '$',
   balance: 0,
-  displayCurrency: '₹', // Default to INR for history display
+  displayCurrency: '₹',
 };
 
 function App() {
@@ -23,15 +23,16 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState<string>('home');
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isSliding, setIsSliding] = useState(false);
-  const { theme } = useTheme(); // Initialize theme hook
+  const { theme } = useTheme();
 
-  const addTransaction = useCallback((amount: number, type: 'expense' | 'income') => {
+  const addTransaction = useCallback((amount: number, type: 'expense' | 'income', category?: string, description?: string) => {
     const now = new Date();
     const transaction: Transaction = {
       id: Date.now().toString(),
       amount,
       type,
+      category: (category as any) || undefined,
+      description: description || undefined,
       date: now.toLocaleDateString(),
       time: now.toLocaleTimeString(),
       timestamp: now.getTime(),
@@ -40,8 +41,8 @@ function App() {
     setAppState(prev => ({
       ...prev,
       transactions: [transaction, ...prev.transactions],
-      balance: type === 'expense' 
-        ? prev.balance - amount 
+      balance: type === 'expense'
+        ? prev.balance - amount
         : prev.balance + amount,
     }));
   }, [setAppState]);
@@ -56,35 +57,19 @@ function App() {
 
   const handleMenuNavigate = useCallback((section: string) => {
     if (currentView === section || isTransitioning) return;
-    
     setIsTransitioning(true);
-    setIsSliding(true);
-    
-    // Simple, clean transition
     setTimeout(() => {
       setCurrentView(section);
-      
-      setTimeout(() => {
-        setIsTransitioning(false);
-        setIsSliding(false);
-      }, 300);
+      setTimeout(() => setIsTransitioning(false), 300);
     }, 150);
   }, [currentView, isTransitioning]);
 
   const handleBackToHome = useCallback(() => {
     if (currentView === 'home' || isTransitioning) return;
-    
     setIsTransitioning(true);
-    setIsSliding(true);
-    
-    // Clean back transition
     setTimeout(() => {
       setCurrentView('home');
-      
-      setTimeout(() => {
-        setIsTransitioning(false);
-        setIsSliding(false);
-      }, 300);
+      setTimeout(() => setIsTransitioning(false), 300);
     }, 150);
   }, [currentView, isTransitioning]);
 
@@ -92,11 +77,9 @@ function App() {
     setAppState(prev => {
       const transactionToDelete = prev.transactions.find(t => t.id === id);
       if (!transactionToDelete) return prev;
-      
       const newBalance = transactionToDelete.type === 'expense'
         ? prev.balance + transactionToDelete.amount
         : prev.balance - transactionToDelete.amount;
-      
       return {
         ...prev,
         transactions: prev.transactions.filter(t => t.id !== id),
@@ -137,10 +120,20 @@ function App() {
         );
       case 'settings':
         return (
-          <Settings 
-            onBack={handleBackToHome} 
+          <Settings
+            onBack={handleBackToHome}
             displayCurrency={appState.displayCurrency || '₹'}
             onDisplayCurrencyChange={handleDisplayCurrencyChange}
+          />
+        );
+      case 'chatbot':
+        return (
+          <ChatBot
+            currency={appState.currency}
+            balance={appState.balance}
+            transactions={appState.transactions}
+            onAddTransaction={addTransaction}
+            onBack={handleBackToHome}
           />
         );
       default:
@@ -158,31 +151,15 @@ function App() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, theme === 'dark' ? styles.darkContainer : styles.lightContainer]}>
-      <StatusBar 
-        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={theme === 'dark' ? '#1f2937' : '#ffffff'}
-      />
+    <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {renderCurrentView()}
       <Menu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onNavigate={handleMenuNavigate}
       />
-    </SafeAreaView>
+    </div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  lightContainer: {
-    backgroundColor: '#f9fafb',
-  },
-  darkContainer: {
-    backgroundColor: '#111827',
-  },
-});
 
 export default App;

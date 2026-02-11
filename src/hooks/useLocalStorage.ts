@@ -1,34 +1,23 @@
 import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  const [storedValue, setStoredValue] = useState<T>(initialValue);
-  const [isLoading, setIsLoading] = useState(true);
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? (JSON.parse(item) as T) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+  const [isLoading] = useState(false);
 
-  useEffect(() => {
-    const loadStoredValue = async () => {
-      try {
-        const item = await AsyncStorage.getItem(key);
-        if (item) {
-          setStoredValue(JSON.parse(item));
-        }
-      } catch (error) {
-        console.error(`Error reading AsyncStorage key "${key}":`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadStoredValue();
-  }, [key]);
-
-  const setValue = async (value: T | ((val: T) => T)) => {
+  const setValue = (value: T | ((val: T) => T)) => {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
-      await AsyncStorage.setItem(key, JSON.stringify(valueToStore));
+      localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
-      console.error(`Error setting AsyncStorage key "${key}":`, error);
+      console.error(`Error setting localStorage key "${key}":`, error);
     }
   };
 

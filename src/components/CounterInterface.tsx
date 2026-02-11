@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { Transaction } from '../types';
-import Icon from 'react-native-vector-icons/Feather';
+import { Menu, Plus, Minus, Delete } from 'lucide-react';
 
 interface CounterInterfaceProps {
   currency: string;
@@ -13,18 +12,17 @@ interface CounterInterfaceProps {
   onNavigateToHistory: () => void;
 }
 
-const CounterInterface: React.FC<CounterInterfaceProps> = ({ 
-  currency, 
-  onAddTransaction, 
-  balance, 
-  transactions, 
-  onMenuOpen, 
-  onNavigateToHistory 
+const CounterInterface: React.FC<CounterInterfaceProps> = ({
+  currency,
+  onAddTransaction,
+  balance,
+  transactions,
+  onMenuOpen,
+  onNavigateToHistory,
 }) => {
   const [amount, setAmount] = useState(0);
   const [displayValue, setDisplayValue] = useState('0');
   const { theme } = useTheme();
-
   const isDark = theme === 'dark';
 
   const handleIncrement = (value: number) => {
@@ -35,12 +33,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
 
   const handleNumpadClick = (digit: string) => {
     setDisplayValue(prev => {
-      if (prev === '0' && digit !== '.') {
-        return digit;
-      }
-      if (digit === '.' && prev.includes('.')) {
-        return prev;
-      }
+      if (prev === '0' && digit !== '.') return digit;
+      if (digit === '.' && prev.includes('.')) return prev;
       return prev + digit;
     });
     setAmount(parseFloat(displayValue === '0' && digit !== '.' ? digit : displayValue + digit) || 0);
@@ -78,497 +72,190 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
   const incrementValues = [1, 5, 10, 25, 50, 100];
 
   return (
-    <ScrollView style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer]}>
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
-      <View style={[styles.header, isDark ? styles.darkHeader : styles.lightHeader]}>
-        <TouchableOpacity onPress={onMenuOpen} style={styles.menuButton}>
-          <Icon name="menu" size={24} color={isDark ? '#d1d5db' : '#374151'} />
-        </TouchableOpacity>
-        
-        <Text style={[styles.headerTitle, isDark ? styles.darkText : styles.lightText]}>
-          Expense Tracker
-        </Text>
-        
-        <View style={styles.balanceContainer}>
-          <Text style={[styles.balanceLabel, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
-            Balance:
-          </Text>
-          <Text style={[styles.balanceAmount, balance >= 0 ? styles.positiveBalance : styles.negativeBalance]}>
+      <div className={`flex items-center justify-between px-6 py-4 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+        <button onClick={onMenuOpen} className="p-2">
+          <Menu size={24} className={isDark ? 'text-gray-300' : 'text-gray-700'} />
+        </button>
+        <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Expense Tracker</h1>
+        <div className="flex items-center">
+          <span className={`text-sm mr-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Balance:</span>
+          <span className={`text-sm font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {currency}{Math.abs(balance).toFixed(2)}
-          </Text>
-        </View>
-      </View>
+          </span>
+        </div>
+      </div>
 
       {/* Amount Display */}
-      <View style={styles.amountSection}>
-        <Text style={[styles.amountDisplay, isDark ? styles.darkText : styles.lightText]}>
+      <div className="text-center py-8">
+        <p className={`text-6xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {currency}{amount.toFixed(2)}
-        </Text>
-        <Text style={[styles.amountLabel, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
+        </p>
+        <p className={`text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           Tap buttons below to set amount
-        </Text>
-      </View>
+        </p>
+      </div>
 
       {/* Quick Amount Buttons */}
-      <View style={styles.quickAmountGrid}>
+      <div className="flex flex-wrap justify-between px-6 mb-8 gap-3">
         {incrementValues.map((value) => (
-          <TouchableOpacity
+          <button
             key={value}
-            onPress={() => handleIncrement(value)}
-            style={[styles.quickAmountButton, isDark ? styles.darkButton : styles.lightButton]}
+            onClick={() => handleIncrement(value)}
+            className={`w-[30%] py-4 rounded-xl text-center text-lg font-semibold border-2 transition-colors ${isDark
+                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              }`}
           >
-            <Text style={[styles.quickAmountText, isDark ? styles.darkText : styles.lightText]}>
-              +{currency}{value}
-            </Text>
-          </TouchableOpacity>
+            +{currency}{value}
+          </button>
         ))}
-      </View>
+      </div>
 
       {/* Main Counter Controls */}
-      <View style={styles.counterControls}>
-        <TouchableOpacity
-          onPress={() => {
+      <div className="flex items-center justify-center px-6 mb-8">
+        <button
+          onClick={() => {
             const newAmount = Math.max(0, amount - 1);
             setAmount(newAmount);
             setDisplayValue(newAmount.toString());
           }}
-          style={[styles.counterButton, styles.decrementButton]}
+          className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center shadow-md"
         >
-          <Icon name="minus" size={24} color="#dc2626" />
-        </TouchableOpacity>
-        
-        <View style={styles.displayContainer}>
-          <Text style={[styles.displayValue, isDark ? styles.darkText : styles.lightText]}>
+          <Minus size={24} className="text-red-600" />
+        </button>
+
+        <div className="text-center mx-8">
+          <p className={`text-3xl font-bold px-4 py-2 border-2 rounded-lg min-w-[128px] ${isDark ? 'text-white border-gray-600' : 'text-gray-900 border-gray-200'
+            }`}>
             {displayValue}
-          </Text>
-          <Text style={[styles.displayLabel, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
-            Use numpad below
-          </Text>
-        </View>
-        
-        <TouchableOpacity
-          onPress={() => {
+          </p>
+          <p className={`text-xs mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Use numpad below</p>
+        </div>
+
+        <button
+          onClick={() => {
             const newAmount = amount + 1;
             setAmount(newAmount);
             setDisplayValue(newAmount.toString());
           }}
-          style={[styles.counterButton, styles.incrementButton]}
+          className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center shadow-md"
         >
-          <Icon name="plus" size={24} color="#16a34a" />
-        </TouchableOpacity>
-      </View>
+          <Plus size={24} className="text-green-600" />
+        </button>
+      </div>
 
-      {/* Dialer-style Numpad */}
-      <View style={styles.numpadContainer}>
-        <View style={styles.numpadGrid}>
+      {/* Numpad */}
+      <div className="px-6 mb-8">
+        <div className="flex flex-wrap justify-between mb-4">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <TouchableOpacity
+            <button
               key={num}
-              onPress={() => handleNumpadClick(num.toString())}
-              style={[styles.numpadButton, isDark ? styles.darkButton : styles.lightButton]}
+              onClick={() => handleNumpadClick(num.toString())}
+              className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 mb-3 shadow-sm transition-colors ${isDark
+                  ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+                  : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+                }`}
             >
-              <Text style={[styles.numpadText, isDark ? styles.darkText : styles.lightText]}>
-                {num}
-              </Text>
-            </TouchableOpacity>
+              {num}
+            </button>
           ))}
-        </View>
-        
-        {/* Bottom row: decimal, 0, backspace */}
-        <View style={styles.numpadBottomRow}>
-          <TouchableOpacity
-            onPress={() => handleNumpadClick('.')}
-            style={[styles.numpadButton, isDark ? styles.darkButton : styles.lightButton]}
+        </div>
+
+        <div className="flex justify-between mb-3">
+          <button
+            onClick={() => handleNumpadClick('.')}
+            className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 transition-colors ${isDark
+                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              }`}
           >
-            <Text style={[styles.numpadText, isDark ? styles.darkText : styles.lightText]}>
-              .
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            onPress={() => handleNumpadClick('0')}
-            style={[styles.numpadButton, isDark ? styles.darkButton : styles.lightButton]}
+            .
+          </button>
+          <button
+            onClick={() => handleNumpadClick('0')}
+            className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 transition-colors ${isDark
+                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              }`}
           >
-            <Text style={[styles.numpadText, isDark ? styles.darkText : styles.lightText]}>
-              0
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            onPress={handleBackspace}
-            style={[styles.numpadButton, styles.backspaceButton]}
+            0
+          </button>
+          <button
+            onClick={handleBackspace}
+            className="w-[30%] h-16 rounded-xl flex items-center justify-center border-2 bg-orange-50 border-orange-200"
           >
-            <Icon name="delete" size={18} color="#ea580c" />
-          </TouchableOpacity>
-        </View>
-        
-        {/* Clear button */}
-        <TouchableOpacity
-          onPress={handleClear}
-          style={[styles.clearButton, isDark ? styles.darkClearButton : styles.lightClearButton]}
+            <Delete size={18} className="text-orange-600" />
+          </button>
+        </div>
+
+        <button
+          onClick={handleClear}
+          className={`w-full py-3 rounded-xl text-base font-medium border-2 transition-colors ${isDark
+              ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+              : 'bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200'
+            }`}
         >
-          <Text style={[styles.clearButtonText, isDark ? styles.darkText : styles.lightText]}>
-            Clear
-          </Text>
-        </TouchableOpacity>
-      </View>
+          Clear
+        </button>
+      </div>
 
       {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          onPress={handleAddExpense}
+      <div className="flex px-6 mb-8 gap-4">
+        <button
+          onClick={handleAddExpense}
           disabled={amount <= 0}
-          style={[styles.actionButton, styles.expenseButton, amount <= 0 && styles.disabledButton]}
+          className={`flex-1 flex items-center justify-center py-4 px-8 rounded-xl text-white font-semibold shadow-md transition-colors ${amount > 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-300 cursor-not-allowed'
+            }`}
         >
-          <Icon name="minus" size={20} color="white" />
-          <Text style={styles.actionButtonText}>Add Expense</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          onPress={handleAddIncome}
+          <Minus size={20} className="mr-2" />
+          Add Expense
+        </button>
+        <button
+          onClick={handleAddIncome}
           disabled={amount <= 0}
-          style={[styles.actionButton, styles.incomeButton, amount <= 0 && styles.disabledButton]}
+          className={`flex-1 flex items-center justify-center py-4 px-8 rounded-xl text-white font-semibold shadow-md transition-colors ${amount > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300 cursor-not-allowed'
+            }`}
         >
-          <Icon name="plus" size={20} color="white" />
-          <Text style={styles.actionButtonText}>Add Income</Text>
-        </TouchableOpacity>
-      </View>
+          <Plus size={20} className="mr-2" />
+          Add Income
+        </button>
+      </div>
 
-      {/* Recent Transactions Preview */}
+      {/* Recent Transactions */}
       {transactions.length > 0 && (
-        <View style={[styles.recentTransactions, isDark ? styles.darkCard : styles.lightCard]}>
-          <View style={styles.recentHeader}>
-            <Text style={[styles.recentTitle, isDark ? styles.darkText : styles.lightText]}>
+        <div className={`mx-6 mb-6 rounded-xl p-6 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Recent Transactions
-            </Text>
-            <TouchableOpacity onPress={onNavigateToHistory}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.transactionsList}>
+            </h3>
+            <button onClick={onNavigateToHistory} className="text-blue-500 text-sm font-medium">
+              View All
+            </button>
+          </div>
+          <div className="space-y-3">
             {transactions.slice(0, 3).map((transaction) => (
-              <View key={transaction.id} style={styles.transactionItem}>
-                <View>
-                  <Text style={[styles.transactionType, isDark ? styles.darkText : styles.lightText]}>
+              <div key={transaction.id} className="flex justify-between items-center py-2">
+                <div>
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
-                  </Text>
-                  <Text style={[styles.transactionTime, isDark ? styles.darkSecondaryText : styles.lightSecondaryText]}>
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {transaction.time}
-                  </Text>
-                </View>
-                <Text style={[
-                  styles.transactionAmount,
-                  transaction.type === 'expense' ? styles.expenseAmount : styles.incomeAmount
-                ]}>
+                  </p>
+                </div>
+                <p className={`font-bold ${transaction.type === 'expense' ? 'text-red-600' : 'text-green-600'}`}>
                   {transaction.type === 'expense' ? '-' : '+'}
                   {currency}{transaction.amount.toFixed(2)}
-                </Text>
-              </View>
+                </p>
+              </div>
             ))}
-          </View>
-        </View>
+          </div>
+        </div>
       )}
-    </ScrollView>
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  lightContainer: {
-    backgroundColor: '#f9fafb',
-  },
-  darkContainer: {
-    backgroundColor: '#111827',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  lightHeader: {
-    backgroundColor: '#ffffff',
-  },
-  darkHeader: {
-    backgroundColor: '#1f2937',
-  },
-  menuButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  balanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  balanceLabel: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  balanceAmount: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  positiveBalance: {
-    color: '#16a34a',
-  },
-  negativeBalance: {
-    color: '#dc2626',
-  },
-  amountSection: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  amountDisplay: {
-    fontSize: 64,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  amountLabel: {
-    fontSize: 16,
-  },
-  quickAmountGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  quickAmountButton: {
-    width: '30%',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 2,
-  },
-  lightButton: {
-    backgroundColor: '#ffffff',
-    borderColor: '#e5e7eb',
-  },
-  darkButton: {
-    backgroundColor: '#1f2937',
-    borderColor: '#4b5563',
-  },
-  quickAmountText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  counterControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  counterButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  decrementButton: {
-    backgroundColor: '#fef2f2',
-  },
-  incrementButton: {
-    backgroundColor: '#f0fdf4',
-  },
-  displayContainer: {
-    alignItems: 'center',
-    marginHorizontal: 32,
-  },
-  displayValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 2,
-    borderRadius: 8,
-    minWidth: 128,
-  },
-  displayLabel: {
-    fontSize: 12,
-    marginTop: 8,
-  },
-  numpadContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  numpadGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  numpadBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  numpadButton: {
-    width: '30%',
-    height: 64,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    borderWidth: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  backspaceButton: {
-    backgroundColor: '#fff7ed',
-    borderColor: '#fed7aa',
-  },
-  numpadText: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  clearButton: {
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 2,
-  },
-  lightClearButton: {
-    backgroundColor: '#f3f4f6',
-    borderColor: '#e5e7eb',
-  },
-  darkClearButton: {
-    backgroundColor: '#374151',
-    borderColor: '#4b5563',
-  },
-  clearButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginHorizontal: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  expenseButton: {
-    backgroundColor: '#ef4444',
-  },
-  incomeButton: {
-    backgroundColor: '#22c55e',
-  },
-  disabledButton: {
-    backgroundColor: '#d1d5db',
-  },
-  actionButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  recentTransactions: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  lightCard: {
-    backgroundColor: '#ffffff',
-  },
-  darkCard: {
-    backgroundColor: '#1f2937',
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  recentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  viewAllText: {
-    color: '#3b82f6',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  transactionsList: {
-    gap: 12,
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  transactionType: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  transactionTime: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  transactionAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  expenseAmount: {
-    color: '#dc2626',
-  },
-  incomeAmount: {
-    color: '#16a34a',
-  },
-  lightText: {
-    color: '#111827',
-  },
-  darkText: {
-    color: '#ffffff',
-  },
-  lightSecondaryText: {
-    color: '#6b7280',
-  },
-  darkSecondaryText: {
-    color: '#9ca3af',
-  },
-});
 
 export default CounterInterface;
