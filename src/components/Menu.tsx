@@ -9,8 +9,6 @@ interface MenuProps {
 }
 
 const menuItems = [
-  { id: 'chatbot', label: 'AI Chat', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
-  { id: 'home', label: 'Classic View', icon: LayoutGrid, description: 'Standard expense tracking interface' },
   { id: 'import', label: 'Magic Import', icon: Sparkles, description: 'Parse text into transactions' },
   { id: 'currency', label: 'Currency Selection', icon: DollarSign, description: 'Choose your preferred currency' },
   { id: 'history', label: 'Transaction History', icon: Clock, description: 'View all your transactions' },
@@ -55,18 +53,39 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
           } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-blue-500">
-          <h2 className="text-xl font-bold text-white">FinMate</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-          >
-            <X size={20} className="text-white" />
-          </button>
+        <div className="flex flex-col px-6 py-4 bg-blue-600 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white tracking-tight">FinMate</h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            >
+              <X size={20} className="text-white" />
+            </button>
+          </div>
+
+          {/* View Toggle */}
+          <div className="bg-black/20 p-1 rounded-xl flex gap-1">
+            <button
+              onClick={() => handleItemClick('chatbot')}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                // We can't easily know current view here without prop, but we can assume logic or just style as buttons
+                'bg-white text-blue-600 shadow-sm'
+                }`}
+            >
+              <MessageCircle size={16} /> AI Chat
+            </button>
+            <button
+              onClick={() => handleItemClick('home')}
+              className="flex-1 py-2 px-3 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 flex items-center justify-center gap-2 transition-all"
+            >
+              <LayoutGrid size={16} /> Classic
+            </button>
+          </div>
         </div>
 
         {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-2">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
             return (

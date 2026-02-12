@@ -511,9 +511,9 @@ const ChatBot: React.FC<ChatBotProps> = ({
     // ─── Render ─────────────────────────────────────────────────────────────
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col h-screen">
+        <div className="h-[calc(100vh-64px)] bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col overflow-hidden relative">
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth relative">
+            <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
                 {/* Ambient Background for Liquid Feel */}
                 <div className="fixed inset-0 pointer-events-none overflow-hidden">
                     <div className="absolute top-20 left-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl opacity-50 animate-pulse"></div>
@@ -523,7 +523,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
                 {messages.length === 0 ? (
                     // HERO VIEW (Empty State)
-                    <div className="h-full flex flex-col items-center justify-center relative z-10">
+                    <div className="h-full flex flex-col items-center justify-center relative z-10 min-h-[500px]">
                         <div className="w-24 h-24 mb-6 rounded-3xl bg-white/30 dark:bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-xl relative group overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 opacity-20 group-hover:opacity-30 transition-opacity"></div>
                             <Bot size={48} className="text-blue-600 dark:text-blue-400 relative z-10" />
@@ -560,7 +560,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
                     </div>
                 ) : (
                     // CHAT VIEW
-                    <div className="space-y-6 max-w-3xl mx-auto pb-20">
+                    <div className="space-y-6 max-w-3xl mx-auto pb-4">
                         {messages.map((msg) => {
                             const isUser = msg.sender === 'user';
                             const isAnimating = animatingIds.has(msg.id);
@@ -654,8 +654,8 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
             {/* Dynamic Contextual Suggestions (Floating above input) */}
             {dynamicSuggestions.length > 0 && messages.length > 0 && (
-                <div className="absolute bottom-24 left-0 right-0 px-4 flex justify-center z-10">
-                    <div className="flex gap-2 overflow-x-auto pb-1 max-w-2xl no-scrollbar">
+                <div className="absolute bottom-24 left-0 right-0 px-4 flex justify-center z-10 pointer-events-none">
+                    <div className="flex gap-2 overflow-x-auto pb-1 max-w-2xl no-scrollbar pointer-events-auto">
                         {dynamicSuggestions.map((suggestion) => (
                             <button
                                 key={suggestion}
@@ -704,7 +704,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
             {/* Input Bar */}
             {/* Floating Input Bar */}
-            <div className="p-4 flex justify-center">
+            <div className={`p-4 flex justify-center w-full z-20 ${isDark ? 'bg-gray-900 border-t border-gray-800' : 'bg-gray-50 border-t border-gray-200'} backdrop-blur-lg bg-opacity-90`}>
                 <div className={`w-full max-w-3xl rounded-2xl shadow-xl border transition-all duration-300 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="flex items-center p-2 gap-2">
                         <button
