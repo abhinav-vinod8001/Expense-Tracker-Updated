@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { Transaction } from '../types';
-import { Menu, Plus, Minus, Delete } from 'lucide-react';
+import { Menu, Plus, Minus, Delete, Bot } from 'lucide-react';
 
 interface CounterInterfaceProps {
   currency: string;
@@ -10,6 +10,7 @@ interface CounterInterfaceProps {
   transactions: Transaction[];
   onMenuOpen: () => void;
   onNavigateToHistory: () => void;
+  onSwitchToChat?: () => void;
 }
 
 const CounterInterface: React.FC<CounterInterfaceProps> = ({
@@ -19,6 +20,7 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
   transactions,
   onMenuOpen,
   onNavigateToHistory,
+  onSwitchToChat,
 }) => {
   const [amount, setAmount] = useState(0);
   const [displayValue, setDisplayValue] = useState('0');
@@ -104,8 +106,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
             key={value}
             onClick={() => handleIncrement(value)}
             className={`w-[30%] py-4 rounded-xl text-center text-lg font-semibold border-2 transition-colors ${isDark
-                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
-                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+              : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
               }`}
           >
             +{currency}{value}
@@ -154,8 +156,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
               key={num}
               onClick={() => handleNumpadClick(num.toString())}
               className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 mb-3 shadow-sm transition-colors ${isDark
-                  ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
-                  : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
                 }`}
             >
               {num}
@@ -167,8 +169,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
           <button
             onClick={() => handleNumpadClick('.')}
             className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 transition-colors ${isDark
-                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
-                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+              : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
               }`}
           >
             .
@@ -176,8 +178,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
           <button
             onClick={() => handleNumpadClick('0')}
             className={`w-[30%] h-16 rounded-xl text-xl font-semibold border-2 transition-colors ${isDark
-                ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
-                : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
+              ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700'
+              : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
               }`}
           >
             0
@@ -193,8 +195,8 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
         <button
           onClick={handleClear}
           className={`w-full py-3 rounded-xl text-base font-medium border-2 transition-colors ${isDark
-              ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
-              : 'bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200'
+            ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600'
+            : 'bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200'
             }`}
         >
           Clear
@@ -222,6 +224,10 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
           Add Income
         </button>
       </div>
+
+
+
+
 
       {/* Recent Transactions */}
       {transactions.length > 0 && (
@@ -253,6 +259,17 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Floating AI Chat Button */}
+      {onSwitchToChat && (
+        <button
+          onClick={onSwitchToChat}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"
+          title="Switch to AI Chat"
+        >
+          <Bot size={24} />
+        </button>
       )}
     </div>
   );

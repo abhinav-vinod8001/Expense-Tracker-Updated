@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { ArrowLeft, MessageCircle, DollarSign, Clock, Info, TrendingUp, Settings, X } from 'lucide-react';
+import { ArrowLeft, MessageCircle, DollarSign, Clock, Info, TrendingUp, Settings, X, ShieldCheck } from 'lucide-react';
 
 interface MenuProps {
   isOpen: boolean;
@@ -9,9 +9,11 @@ interface MenuProps {
 }
 
 const menuItems = [
-  { id: 'chatbot', label: 'AI Chat Mode', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
+  { id: 'chatbot', label: 'Home', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
   { id: 'currency', label: 'Currency Selection', icon: DollarSign, description: 'Choose your preferred currency' },
   { id: 'history', label: 'Transaction History', icon: Clock, description: 'View all your transactions' },
+  { id: 'budgets', label: 'Monthly Budgets', icon: TrendingUp, description: 'Manage spending limits' },
+  { id: 'dashboard', label: 'Financial Health', icon: ShieldCheck, description: 'Score, subscriptions & insights' },
   { id: 'about', label: 'About Us', icon: Info, description: 'Learn about the app' },
   { id: 'recommendations', label: 'Recommendations', icon: TrendingUp, description: 'Get spending insights' },
 ];
@@ -52,7 +54,7 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-blue-500">
-          <h2 className="text-xl font-bold text-white">Menu</h2>
+          <h2 className="text-xl font-bold text-white">FinMate</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -110,14 +112,14 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
         {/* Footer */}
         <div className={`px-6 py-4 text-center ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
           <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            Expense Tracker v2.0
+            FinMate v2.0
           </p>
         </div>
       </div>
 
       {/* Backdrop — right of the panel, fades in */}
       <div
-        className={`flex-1 transition-opacity duration-300 ${animating ? 'bg-black/50 opacity-100' : 'bg-black/50 opacity-0'
+        className={`flex-1 transition-opacity duration-300 ${animating ? 'bg-black/50 backdrop-blur-sm opacity-100' : 'bg-black/50 backdrop-blur-sm opacity-0'
           }`}
         onClick={onClose}
       />

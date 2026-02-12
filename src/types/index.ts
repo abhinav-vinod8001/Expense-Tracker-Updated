@@ -30,8 +30,22 @@ export interface Transaction {
   timestamp: number;
 }
 
+export interface Budget {
+  id: string;
+  category: TransactionCategory;
+  limit: number;
+  period: 'monthly';
+}
+
+export interface BudgetPlanItem {
+  category: TransactionCategory;
+  limit: number;
+  reason: string;
+}
+
 export interface AppState {
   transactions: Transaction[];
+  budgets: Budget[];
   currency: string;
   balance: number;
   displayCurrency?: string;

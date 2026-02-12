@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, Send, Mic, MicOff, Bot, X, HelpCircle, Wallet, PlusCircle, MinusCircle, BarChart3, Undo2 } from 'lucide-react';
+import { ArrowLeft, Send, Mic, MicOff, Bot, X, HelpCircle, Wallet, PlusCircle, MinusCircle, BarChart3, Undo2, Calculator, Menu } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
-import { Transaction, TransactionCategory, CATEGORY_META } from '../types';
+import { Transaction, Budget, TransactionCategory, CATEGORY_META, BudgetPlanItem } from '../types';
 import {
     ChatMessage,
     ParsedTransaction,
@@ -21,6 +21,7 @@ import {
     generateUndoResponse,
     generateAnalyticsResponse,
     parseMultipleTransactions,
+    generateSmartInsight,
 } from '../services/chatService';
 import { detectCategory } from '../services/categoryDetector';
 
@@ -30,8 +31,13 @@ interface ChatBotProps {
     currency: string;
     balance: number;
     transactions: Transaction[];
+    budgets: Budget[];
     onAddTransaction: (amount: number, type: 'expense' | 'income', category?: string, description?: string) => void;
+    onSetBudget: (category: string, amount: number) => void;
     onBack: () => void;
+    onSwitchToClassic?: () => void;
+    onMenuOpen?: () => void;
+    persistChat: boolean;
 }
 
 interface ConversationContext {
@@ -41,13 +47,13 @@ interface ConversationContext {
     awaitingType?: boolean; // waiting for expense/income clarification
 }
 
-const QUICK_CHIPS = [
-    { label: 'Add Expense', message: 'I want to add an expense', icon: MinusCircle, color: 'text-red-500' },
-    { label: 'Add Income', message: 'I want to add income', icon: PlusCircle, color: 'text-green-500' },
-    { label: 'Balance', message: 'What is my balance?', icon: Wallet, color: 'text-blue-500' },
-    { label: 'Analytics', message: 'Show my spending breakdown', icon: BarChart3, color: 'text-purple-500' },
-    { label: 'Help', message: 'help', icon: HelpCircle, color: 'text-amber-500' },
-    { label: 'Undo', message: 'undo that', icon: Undo2, color: 'text-gray-500' },
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const HERO_ACTIONS = [
+    { label: 'Add Expense', message: 'I want to add an expense', icon: MinusCircle, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/20' },
+    { label: 'Check Balance', message: 'What is my balance?', icon: Wallet, color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-900/20' },
+    { label: 'Spending Analytics', message: 'Show my spending breakdown', icon: BarChart3, color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/20' },
+    { label: 'Savings Tips', message: 'Give me tips to save money', icon: HelpCircle, color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-900/20' },
 ];
 
 // ─── SpeechRecognition type ─────────────────────────────────────────────────
@@ -64,6 +70,10 @@ const ChatBot: React.FC<ChatBotProps> = ({
     transactions,
     onAddTransaction,
     onBack,
+    onSwitchToClassic,
+    onMenuOpen,
+    onSetBudget,
+    persistChat,
 }) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
@@ -76,6 +86,8 @@ const ChatBot: React.FC<ChatBotProps> = ({
     const [context, setContext] = useState<ConversationContext>({});
     const [liveTranscript, setLiveTranscript] = useState('');
     const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+    const [typingStatus, setTypingStatus] = useState('✨ Processing...');
+    const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +95,12 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
     // Load history or initialize with greeting
     useEffect(() => {
+        if (!persistChat) {
+            localStorage.removeItem('expense_tracker_chat_history');
+            setMessages([]);
+            return;
+        }
+
         const savedHistory = localStorage.getItem('expense_tracker_chat_history');
         if (savedHistory) {
             try {
@@ -108,25 +126,8 @@ const ChatBot: React.FC<ChatBotProps> = ({
     }, [messages]);
 
     const initGreeting = () => {
-        const greetings = [
-            `👋 *Hey there!*\n\nI'm your AI finance assistant. Ready to track some expenses? 💸\n\n💡 Try: "Spent 200 on food" or "Show my spending"`,
-            `🚀 *Welcome back!*\n\nLet's get your finances in order. What did you spend on today? 💰\n\n💡 Try: "Spent 150 on uber" or "How much did I save?"`,
-            `🤖 *Hello!* I'm here to help you manage your money.\n\nNeed to log a transaction or get advice? Just ask! 🧠\n\n💡 Try: "Tips for saving money"`,
-            `✨ *Hi!* keeping track of money is hard, but I make it easy.\n\nTell me what you bought or earned! 📝\n\n💡 Try: "Income 5000 from freelance"`,
-            `📊 *Greetings!* Ready to analyze your spending?\n\nI can help you budget better. What's on your mind? 💭\n\n💡 Try: "Analyze my food spending"`,
-        ];
-
-        const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-
-        const greeting: ChatMessage = {
-            id: 'greeting',
-            text: randomGreeting,
-            sender: 'bot',
-            timestamp: Date.now(),
-        };
-        setMessages([greeting]);
-        setAnimatingIds(new Set(['greeting']));
-        setTimeout(() => setAnimatingIds(new Set()), 500);
+        // No initial greeting message in chat history allowing Hero View to show
+        setMessages([]);
     };
 
     useEffect(() => {
@@ -184,6 +185,8 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
                 // ─── Context-aware responses ─────────────────────────────
 
+                let budgetPlan: BudgetPlanItem[] | undefined;
+
                 // Awaiting expense/income clarification
                 if (context.awaitingType && context.pendingAmount) {
                     const lower = messageText.toLowerCase();
@@ -198,9 +201,12 @@ const ChatBot: React.FC<ChatBotProps> = ({
                         const newBal = currentBalance - parsed.amount;
                         setCurrentBalance(newBal);
                         botText = generateTransactionResponse(parsed, currency, newBal);
+                        const insight = generateSmartInsight(parsed, transactions, currency, newBal);
+                        if (insight) botText += insight;
                         botTransaction = parsed;
                         isCard = true;
                         setContext({ lastTransaction: parsed, lastTransactionId: Date.now().toString() });
+                        setDynamicSuggestions(['Show my spending', 'Add another expense', 'Tips to save']);
                     } else if (lower.includes('income') || lower.includes('earn') || lower.includes('receiv')) {
                         const { category } = detectCategory(lower);
                         const parsed: ParsedTransaction = {
@@ -212,9 +218,12 @@ const ChatBot: React.FC<ChatBotProps> = ({
                         const newBal = currentBalance + parsed.amount;
                         setCurrentBalance(newBal);
                         botText = generateTransactionResponse(parsed, currency, newBal);
+                        const incomeInsight = generateSmartInsight(parsed, transactions, currency, newBal);
+                        if (incomeInsight) botText += incomeInsight;
                         botTransaction = parsed;
                         isCard = true;
                         setContext({ lastTransaction: parsed, lastTransactionId: Date.now().toString() });
+                        setDynamicSuggestions(['Show my balance', 'Add an expense', 'How much did I save?']);
                     } else if (isDenial(messageText)) {
                         botText = '👍 No problem! Cancelled. What else would you like to do?';
                         setContext({});
@@ -247,16 +256,21 @@ const ChatBot: React.FC<ChatBotProps> = ({
                 else if (isHelpRequest(messageText)) {
                     botText = generateHelpResponse();
                     setContext({});
+                    setDynamicSuggestions(['Add expense', 'Show balance', 'Spending breakdown']);
                 }
                 // Balance query
                 else if (isBalanceQuery(messageText)) {
+                    setTypingStatus('📊 Crunching numbers...');
                     botText = generateBalanceResponse(currency, currentBalance, transactions);
                     setContext({});
+                    setDynamicSuggestions(['Spending breakdown', 'Tips to save', 'Add expense']);
                 }
                 // Analytics query
                 else if (isAnalyticsQuery(messageText)) {
+                    setTypingStatus('📊 Crunching numbers...');
                     botText = generateAnalyticsResponse(messageText, transactions, currency);
                     setContext({});
+                    setDynamicSuggestions(['Compare to last week', 'Tips to reduce spending', 'Show top expenses']);
                 }
                 // Transaction parsing
                 else {
@@ -269,6 +283,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
                         const multiples = parseMultipleTransactions(messageText);
                         if (multiples.length > 0) {
                             if (multiples.length === 1) {
+                                setTypingStatus('💰 Recording...');
                                 const parsed = multiples[0];
                                 onAddTransaction(parsed.amount, parsed.type, parsed.category, parsed.description);
                                 const newBal = parsed.type === 'expense'
@@ -276,10 +291,14 @@ const ChatBot: React.FC<ChatBotProps> = ({
                                     : currentBalance + parsed.amount;
                                 setCurrentBalance(newBal);
                                 botText = generateTransactionResponse(parsed, currency, newBal);
+                                const txnInsight = generateSmartInsight(parsed, transactions, currency, newBal);
+                                if (txnInsight) botText += txnInsight;
                                 botTransaction = parsed;
                                 isCard = true;
                                 setContext({ lastTransaction: parsed, lastTransactionId: Date.now().toString() });
+                                setDynamicSuggestions(['Show my spending', 'Add another', 'Tips to save']);
                             } else {
+                                setTypingStatus('💰 Recording multiple...');
                                 let netChange = 0;
                                 let summary = `✅ **Processed ${multiples.length} transactions:**\n`;
                                 multiples.forEach(t => {
@@ -293,13 +312,60 @@ const ChatBot: React.FC<ChatBotProps> = ({
                                 setCurrentBalance(newBal);
                                 botText = summary + `\n\n📊 New Balance: ${currency}${newBal.toFixed(2)}`;
                                 setContext({});
+                                setDynamicSuggestions(['Show balance', 'Spending breakdown', 'Add more']);
                             }
                         } else {
-                            // Use Groq/AI fallback
-                            setIsTyping(true); // Show typing while AI thinks
-                            botText = await generateSmartResponse(messageText, transactions, currency);
+                            // Use Groq/AI fallback with conversation history
+                            setTypingStatus('🧠 Thinking deeply...');
+                            setIsTyping(true);
+                            const chatHistory = messages.map(m => ({ text: m.text, sender: m.sender }));
+                            const rawResponse = await generateSmartResponse(messageText, transactions, currency, chatHistory);
+                            console.log("🤖 Raw Groq Response:", rawResponse);
+
+                            // Check for Budget Plan
+                            if (rawResponse.includes(':::BUDGET_PLAN:::')) {
+                                try {
+                                    const parts = rawResponse.split(':::BUDGET_PLAN:::');
+                                    botText = parts[0].trim() || "Here is your requested budget plan. 👇";
+                                    const jsonPart = parts[1].split(':::END:::')[0];
+                                    const plan = JSON.parse(jsonPart);
+                                    budgetPlan = plan;
+                                } catch (e) {
+                                    console.error("JSON Parse Error", e);
+                                    botText = rawResponse; // Fallback
+                                }
+                            }
+                            // Check for Transaction
+                            else if (rawResponse.includes(':::TRANSACTION:::')) {
+                                try {
+                                    const parts = rawResponse.split(':::TRANSACTION:::');
+                                    botText = parts[0].trim();
+                                    const jsonPart = parts[1].split(':::END:::')[0];
+                                    const txnData = JSON.parse(jsonPart);
+
+                                    // 1. Update App State
+                                    onAddTransaction(txnData.amount, txnData.type, txnData.category, txnData.description);
+
+                                    // 2. Prepare UI Card
+                                    botTransaction = {
+                                        amount: txnData.amount,
+                                        type: txnData.type,
+                                        category: txnData.category,
+                                        description: txnData.description,
+                                    };
+                                    isCard = true;
+                                    setDynamicSuggestions(['Undo', 'Show balance']);
+                                } catch (e) {
+                                    console.error("Transaction Parse Error", e);
+                                    botText = "I understood the transaction but couldn't process the details. Please try again.";
+                                }
+                            } else {
+                                botText = rawResponse;
+                            }
+
                             setIsTyping(false);
                             setContext({});
+                            setDynamicSuggestions(['Tell me more', 'Show my spending', 'Add expense']);
                         }
                     }
                 }
@@ -311,6 +377,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
                     timestamp: Date.now(),
                     transaction: botTransaction,
                     isCard,
+                    budgetPlan,
                 };
                 addMessage(botMessage);
             }, delay);
@@ -445,128 +512,167 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 flex flex-col h-screen">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm transition-colors duration-300">
-                <div className="flex items-center justify-between px-6 py-4">
-                    <div className="flex items-center">
-                        <button
-                            onClick={onBack}
-                            className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-300" />
-                        </button>
-                        <div className="ml-3 flex items-center space-x-3">
-                            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                                <Bot size={20} className="text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-900 dark:text-white">AI Assistant</h1>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    {isTyping ? '⚡ Analyzing...' : isRecording ? '🎙️ Listening...' : 'Smart expense tracking'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className={`px-3 py-1.5 rounded-lg ${currentBalance >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'}`}>
-                            <span className={`text-sm font-bold ${currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {currency}{Math.abs(currentBalance).toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {messages.map((msg) => {
-                    const isUser = msg.sender === 'user';
-                    const isAnimating = animatingIds.has(msg.id);
-                    return (
-                        <div
-                            key={msg.id}
-                            className={`flex ${isUser ? 'justify-end' : 'justify-start'} transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-3' : 'opacity-100 translate-y-0'
-                                }`}
-                            style={isAnimating ? { animation: 'fadeSlideIn 0.4s ease forwards' } : undefined}
-                        >
-                            {!isUser && (
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
-                                    <Bot size={16} className="text-white" />
-                                </div>
-                            )}
+            <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth relative">
+                {/* Ambient Background for Liquid Feel */}
+                <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-20 left-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl opacity-50 animate-pulse delay-1000"></div>
+                </div>
 
-                            <div
-                                className={`max-w-[75%] rounded-xl shadow-sm transition-colors duration-300 ${isUser
-                                    ? 'bg-blue-500 text-white rounded-br-sm'
-                                    : 'bg-white dark:bg-gray-800 rounded-bl-sm'
-                                    }`}
-                            >
-                                <div className="px-4 py-3">
-                                    <p
-                                        className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${isUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'
+
+                {messages.length === 0 ? (
+                    // HERO VIEW (Empty State)
+                    <div className="h-full flex flex-col items-center justify-center relative z-10">
+                        <div className="w-24 h-24 mb-6 rounded-3xl bg-white/30 dark:bg-black/30 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-xl relative group overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                            <Bot size={48} className="text-blue-600 dark:text-blue-400 relative z-10" />
+                        </div>
+                        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}
+                        </h2>
+                        <p className={`mb-10 text-center max-w-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            I'm FinMate, your AI financial companion. I can track expenses, set budgets, and analyze your spending habits.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4 w-full max-w-lg px-4">
+                            {HERO_ACTIONS.map((action) => {
+                                const Icon = action.icon;
+                                return (
+                                    <button
+                                        key={action.label}
+                                        onClick={() => handleSend(action.message)}
+                                        className={`p-4 rounded-2xl text-left border transition-all duration-300 hover:scale-[1.02] active:scale-95 group ${isDark
+                                            ? 'bg-gray-800/60 border-gray-700 hover:bg-gray-800 backdrop-blur-lg'
+                                            : 'bg-white/60 border-white/50 hover:bg-white/80 backdrop-blur-lg shadow-lg hover:shadow-xl'
                                             }`}
                                     >
-                                        {msg.text}
-                                    </p>
+                                        <div className={`w-10 h-10 rounded-xl ${action.bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                                            <Icon size={20} className={action.color} />
+                                        </div>
+                                        <div className={`font-semibold text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                                            {action.label}
+                                        </div>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                ) : (
+                    // CHAT VIEW
+                    <div className="space-y-6 max-w-3xl mx-auto pb-20">
+                        {messages.map((msg) => {
+                            const isUser = msg.sender === 'user';
+                            const isAnimating = animatingIds.has(msg.id);
+                            return (
+                                <div
+                                    key={msg.id}
+                                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'} transition-all duration-500 ease-out`}
+                                >
+                                    {!isUser && (
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 mt-1 flex-shrink-0 shadow-sm">
+                                            <Bot size={14} className="text-white" />
+                                        </div>
+                                    )}
 
-                                    {/* Transaction Card */}
-                                    {msg.isCard && msg.transaction && renderTransactionCard(msg.transaction)}
+                                    <div className={`group relative max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-3.5 shadow-sm backdrop-blur-md ${isUser
+                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-sm shadow-blue-500/20'
+                                        : 'bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 rounded-bl-sm border border-white/20 dark:border-gray-700 shadow-xl'
+                                        }`}>
+                                        <div className="whitespace-pre-wrap leading-relaxed">
+                                            {msg.text}
+                                        </div>
 
-                                    <p
-                                        className={`text-[10px] mt-1.5 text-right ${isUser ? 'text-white/60' : 'text-gray-400 dark:text-gray-500'
-                                            }`}
-                                    >
-                                        {formatTime(msg.timestamp)}
-                                    </p>
+                                        {/* Transaction Card */}
+                                        {msg.isCard && msg.transaction && renderTransactionCard(msg.transaction)}
+
+                                        {/* Budget Plan Card */}
+                                        {(msg as any).budgetPlan && (
+                                            <div className={`mt-3 rounded-xl p-4 shadow-sm border ${isDark ? 'bg-gray-750 border-gray-600' : 'bg-white border-gray-200'}`}>
+                                                <h3 className={`font-bold mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                    <Wallet size={18} />
+                                                    Proposed Monthly Budget
+                                                </h3>
+                                                <div className="space-y-3 mb-4">
+                                                    {(msg as any).budgetPlan.map((item: BudgetPlanItem, idx: number) => (
+                                                        <div key={idx} className="flex justify-between items-center text-sm">
+                                                            <div className="flex items-center gap-2">
+                                                                <span>{CATEGORY_META[item.category]?.emoji || '📌'}</span>
+                                                                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                                                                    {CATEGORY_META[item.category]?.label || item.category}
+                                                                </span>
+                                                            </div>
+                                                            <div className={`font-mono font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
+                                                                {currency}{item.limit}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        (msg as any).budgetPlan.forEach((item: BudgetPlanItem) => {
+                                                            onSetBudget(item.category, item.limit);
+                                                        });
+                                                        addMessage({
+                                                            id: Date.now().toString(),
+                                                            text: "✅ Budget plan applied successfully! I'll help you stay on track.",
+                                                            sender: 'bot',
+                                                            timestamp: Date.now()
+                                                        });
+                                                    }}
+                                                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm active:scale-[0.98]"
+                                                >
+                                                    Apply Plan
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className={`text-[10px] mt-2 opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 ${isUser ? 'right-0 text-gray-400' : 'left-0 text-gray-400'}`}>
+                                            {formatTime(msg.timestamp)}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {isTyping && (
+                            <div className="flex justify-start animate-pulse">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 mt-1 flex-shrink-0 opacity-50">
+                                    <Bot size={14} className="text-white" />
+                                </div>
+                                <div className="flex items-center space-x-1 ml-1 mt-3">
+                                    <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                    <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                    <div className="w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-600 animate-bounce" style={{ animationDelay: '300ms' }} />
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-
-                {/* Typing Indicator */}
-                {isTyping && (
-                    <div className="flex justify-start">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
-                            <Bot size={16} className="text-white" />
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl rounded-bl-sm shadow-sm px-5 py-4">
-                            <div className="flex items-center space-x-2">
-                                <div className="flex space-x-1.5">
-                                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                                </div>
-                                <span className="text-xs text-gray-400 dark:text-gray-500">AI is analyzing...</span>
-                            </div>
-                        </div>
+                        )}
+                        <div ref={messagesEndRef} className="h-4" />
                     </div>
                 )}
-
-                <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Action Chips */}
-            <div className="px-6 pb-3">
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                    {QUICK_CHIPS.map((chip) => {
-                        const ChipIcon = chip.icon;
-                        return (
+            {/* Dynamic Contextual Suggestions (Floating above input) */}
+            {dynamicSuggestions.length > 0 && messages.length > 0 && (
+                <div className="absolute bottom-24 left-0 right-0 px-4 flex justify-center z-10">
+                    <div className="flex gap-2 overflow-x-auto pb-1 max-w-2xl no-scrollbar">
+                        {dynamicSuggestions.map((suggestion) => (
                             <button
-                                key={chip.label}
-                                onClick={() => handleSend(chip.message)}
-                                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all hover:scale-[1.02] active:scale-95 ${isDark
-                                    ? 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
-                                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
-                                    } shadow-sm`}
+                                key={suggestion}
+                                onClick={() => { handleSend(suggestion); setDynamicSuggestions([]); }}
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold shadow-sm transition-all hover:scale-105 active:scale-95 border ${isDark
+                                    ? 'bg-gray-800 border-gray-700 text-blue-300 hover:bg-gray-700'
+                                    : 'bg-white border-gray-200 text-blue-600 hover:bg-gray-50'
+                                    }`}
                             >
-                                <ChipIcon size={14} className={chip.color} />
-                                {chip.label}
+                                ✨ {suggestion}
                             </button>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
+
+
 
             {/* Recording Overlay */}
             {isRecording && (
@@ -597,52 +703,41 @@ const ChatBot: React.FC<ChatBotProps> = ({
             )}
 
             {/* Input Bar */}
-            <div className={`border-t px-6 py-3 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} transition-colors duration-300`}>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={handleVoicePress}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${isRecording
-                            ? 'bg-red-500 text-white animate-pulse'
-                            : isDark
-                                ? 'bg-gray-700 hover:bg-gray-600'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                            }`}
-                    >
-                        {isRecording ? (
-                            <MicOff size={18} className="text-white" />
-                        ) : (
-                            <Mic size={18} className="text-gray-500 dark:text-gray-400" />
-                        )}
-                    </button>
+            {/* Floating Input Bar */}
+            <div className="p-4 flex justify-center">
+                <div className={`w-full max-w-3xl rounded-2xl shadow-xl border transition-all duration-300 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center p-2 gap-2">
+                        <button
+                            onClick={handleVoicePress}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isRecording
+                                ? 'bg-red-500 text-white animate-pulse'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400'
+                                }`}
+                        >
+                            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                        </button>
 
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={context.awaitingType ? 'Reply "expense" or "income"...' : 'Type your expense or income...'}
-                        className={`flex-1 h-10 px-4 rounded-lg text-sm outline-none border transition-colors focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                            : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'
-                            }`}
-                    />
-
-                    <button
-                        onClick={() => handleSend()}
-                        disabled={!inputText.trim()}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${inputText.trim()
-                            ? 'bg-blue-500 hover:bg-blue-600 shadow-sm'
-                            : isDark
-                                ? 'bg-gray-700 cursor-not-allowed'
-                                : 'bg-gray-100 cursor-not-allowed'
-                            }`}
-                    >
-                        <Send
-                            size={16}
-                            className={inputText.trim() ? 'text-white' : 'text-gray-400 dark:text-gray-500'}
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder={context.awaitingType ? 'Expected "expense" or "income"...' : 'Message FinMate...'}
+                            className={`flex-1 bg-transparent border-none outline-none text-base px-2 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'}`}
                         />
-                    </button>
+
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={!inputText.trim()}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${inputText.trim()
+                                ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed'
+                                }`}
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
                 </div>
             </div>
 

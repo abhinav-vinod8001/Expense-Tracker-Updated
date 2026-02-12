@@ -1,4 +1,4 @@
-import { Transaction, TransactionCategory, CATEGORY_META } from '../types';
+import { Transaction, TransactionCategory, CATEGORY_META, BudgetPlanItem } from '../types';
 import { detectCategory } from './categoryDetector';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -17,6 +17,7 @@ export interface ChatMessage {
   timestamp: number;
   transaction?: ParsedTransaction;
   isCard?: boolean; // render as visual transaction card
+  budgetPlan?: BudgetPlanItem[];
 }
 
 // ─── Trigger Words ──────────────────────────────────────────────────────────
@@ -301,13 +302,19 @@ export function getGreetingMessage(): ChatMessage {
 // Update this function signature to be async and call Groq
 import { getGroqChatCompletion } from './groqService';
 
+interface ChatHistoryItem {
+  text: string;
+  sender: 'user' | 'bot';
+}
+
 export async function generateSmartResponse(
   message: string,
   transactions: Transaction[],
-  currency: string
+  currency: string,
+  chatHistory: ChatHistoryItem[] = []
 ): Promise<string> {
   try {
-    return await getGroqChatCompletion(message, transactions, currency);
+    return await getGroqChatCompletion(message, transactions, currency, chatHistory);
   } catch (error) {
     console.error('Groq fallback error:', error);
     // Fallback to canned responses if API fails
@@ -318,6 +325,83 @@ export async function generateSmartResponse(
     ];
     return responses[Math.floor(Math.random() * responses.length)];
   }
+}
+
+// ─── Proactive Smart Insights ───────────────────────────────────────────────
+
+export function generateSmartInsight(
+  parsed: ParsedTransaction,
+  allTransactions: Transaction[],
+  currency: string,
+  newBalance: number
+): string | null {
+  const category = parsed.category;
+  const meta = CATEGORY_META[category];
+
+  // Count today's transactions in same category
+  const today = new Date().toISOString().split('T')[0];
+  const todaySameCategory = allTransactions.filter(
+    t => t.type === 'expense' && t.category === category && t.date === today
+  );
+
+  // Total spent in this category all time
+  const categoryTotal = allTransactions
+    .filter(t => t.type === 'expense' && t.category === category)
+    .reduce((sum, t) => sum + t.amount, 0) + (parsed.type === 'expense' ? parsed.amount : 0);
+
+  // Total income
+  const totalIncome = allTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0) + (parsed.type === 'income' ? parsed.amount : 0);
+
+  // Total expenses
+  const totalExpenses = allTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0) + (parsed.type === 'expense' ? parsed.amount : 0);
+
+  const insights: string[] = [];
+
+  // Repeated category today
+  if (parsed.type === 'expense' && todaySameCategory.length >= 2) {
+    insights.push(`That's ${todaySameCategory.length + 1} ${meta.emoji} ${meta.label} expenses today!`);
+  }
+
+  // Large expense warning (> 20% of total income)
+  if (parsed.type === 'expense' && totalIncome > 0 && parsed.amount > totalIncome * 0.2) {
+    insights.push(`⚠️ That's ${((parsed.amount / totalIncome) * 100).toFixed(0)}% of your total income in one go!`);
+  }
+
+  // Savings milestone
+  if (totalIncome > 0) {
+    const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+    if (savingsRate >= 50 && parsed.type === 'income') {
+      insights.push(`🔥 Savings rate at ${savingsRate.toFixed(0)}% — you're a saving machine!`);
+    } else if (savingsRate < 10 && parsed.type === 'expense') {
+      insights.push(`💡 Savings rate dropped to ${savingsRate.toFixed(0)}% — consider slowing down spending.`);
+    }
+  }
+
+  // Balance warning
+  if (newBalance < 0) {
+    insights.push(`🚨 You're in deficit! Balance: ${currency}${Math.abs(newBalance).toFixed(2)} in the red.`);
+  } else if (newBalance > 0 && newBalance < 100 && parsed.type === 'expense') {
+    insights.push(`⚡ Balance getting low — only ${currency}${newBalance.toFixed(2)} remaining.`);
+  }
+
+  // Nice income celebration
+  if (parsed.type === 'income' && parsed.amount >= 1000) {
+    insights.push(`💪 Nice income! Keep stacking!`);
+  }
+
+  // Category spending milestone
+  if (parsed.type === 'expense' && categoryTotal >= 5000) {
+    insights.push(`${meta.emoji} Total ${meta.label} spending has crossed ${currency}${categoryTotal.toFixed(0)}!`);
+  }
+
+  if (insights.length === 0) return null;
+
+  // Return max 2 insights
+  return '\n\n💡 ' + insights.slice(0, 2).join('\n💡 ');
 }
 
 export function generateAmbiguousResponse(amount: number, currency: string): string {

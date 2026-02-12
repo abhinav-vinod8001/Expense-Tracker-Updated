@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Moon, Sun, DollarSign, Trash2 } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, DollarSign, Trash2, Bot, Calculator } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import ToggleSwitch from './ToggleSwitch';
 import { currencyNames } from '../data/exchangeRates';
@@ -8,9 +8,21 @@ interface SettingsProps {
   onBack: () => void;
   displayCurrency: string;
   onDisplayCurrencyChange: (currency: string) => void;
+  defaultHomeView: string;
+  onDefaultHomeViewChange: (view: string) => void;
+  persistChat: boolean;
+  onPersistChatChange: (persist: boolean) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayCurrencyChange }) => {
+const Settings: React.FC<SettingsProps> = ({
+  onBack,
+  displayCurrency,
+  onDisplayCurrencyChange,
+  defaultHomeView,
+  onDefaultHomeViewChange,
+  persistChat,
+  onPersistChatChange
+}) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -70,6 +82,100 @@ const Settings: React.FC<SettingsProps> = ({ onBack, displayCurrency, onDisplayC
                     }`} style={{ zIndex: -1 }} />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Default Home Screen */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Default Home Screen</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Choose which interface opens when you launch the app
+            </p>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => onDefaultHomeViewChange('classic')}
+                className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${defaultHomeView === 'classic'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+              >
+                <div className={`p-3 rounded-lg ${defaultHomeView === 'classic'
+                  ? 'bg-blue-100 dark:bg-blue-900/40'
+                  : 'bg-gray-100 dark:bg-gray-700'
+                  }`}>
+                  <Calculator size={24} className={defaultHomeView === 'classic' ? 'text-blue-600' : 'text-gray-500 dark:text-gray-400'} />
+                </div>
+                <div className="text-center">
+                  <p className={`font-semibold text-sm ${defaultHomeView === 'classic' ? 'text-blue-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                    Classic
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Numpad & buttons</p>
+                </div>
+                {defaultHomeView === 'classic' && (
+                  <span className="text-xs font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">Active</span>
+                )}
+              </button>
+
+              <button
+                onClick={() => onDefaultHomeViewChange('chatbot')}
+                className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${defaultHomeView === 'chatbot'
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+              >
+                <div className={`p-3 rounded-lg ${defaultHomeView === 'chatbot'
+                  ? 'bg-purple-100 dark:bg-purple-900/40'
+                  : 'bg-gray-100 dark:bg-gray-700'
+                  }`}>
+                  <Bot size={24} className={defaultHomeView === 'chatbot' ? 'text-purple-600' : 'text-gray-500 dark:text-gray-400'} />
+                </div>
+                <div className="text-center">
+                  <p className={`font-semibold text-sm ${defaultHomeView === 'chatbot' ? 'text-purple-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                    AI Chatbot
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Chat & voice</p>
+                </div>
+                {defaultHomeView === 'chatbot' && (
+                  <span className="text-xs font-bold text-purple-600 bg-purple-100 dark:bg-purple-900/40 px-2 py-0.5 rounded-full">Active</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chat Settings</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Manage your AI chat experience
+            </p>
+          </div>
+
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-lg transition-colors duration-300">
+                  <Bot size={20} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Persist Chat History
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {persistChat ? 'Keep chat history between sessions' : 'Clear chat history on every login'}
+                  </p>
+                </div>
+              </div>
+              <ToggleSwitch
+                isOn={persistChat}
+                onToggle={() => onPersistChatChange(!persistChat)}
+              />
             </div>
           </div>
         </div>
