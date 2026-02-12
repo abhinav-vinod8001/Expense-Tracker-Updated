@@ -6,6 +6,7 @@ interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (section: string) => void;
+  currentView: string;
 }
 
 const menuItems = [
@@ -18,7 +19,7 @@ const menuItems = [
   { id: 'recommendations', label: 'Recommendations', icon: TrendingUp, description: 'Get spending insights' },
 ];
 
-const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
+const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate, currentView }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [visible, setVisible] = useState(false);
@@ -43,6 +44,8 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
     onClose();
   };
 
+  const isChat = currentView === 'chatbot';
+
   if (!visible) return null;
 
   return (
@@ -50,36 +53,44 @@ const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onNavigate }) => {
       {/* Menu Panel — slides from left */}
       <div
         className={`w-80 h-full flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${animating ? 'translate-x-0' : '-translate-x-full'
-          } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+          } ${isDark ? 'bg-gray-900 border-r border-gray-800' : 'bg-white'}`}
       >
         {/* Header */}
-        <div className="flex flex-col px-6 py-4 bg-blue-600 transition-colors">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white tracking-tight">FinMate</h2>
+        <div className="flex flex-col px-6 py-6 bg-gradient-to-br from-blue-600 to-blue-700 transition-colors">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white tracking-tight">FinMate</h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+              className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors backdrop-blur-sm"
             >
               <X size={20} className="text-white" />
             </button>
           </div>
 
           {/* View Toggle */}
-          <div className="bg-black/20 p-1 rounded-xl flex gap-1">
+          <div className="bg-black/20 p-1.5 rounded-2xl flex relative backdrop-blur-sm">
+            {/* Animated Background */}
+            <div
+              className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl bg-white shadow-lg transition-all duration-300 ease-out z-0`}
+              style={{
+                left: isChat ? '6px' : 'calc(50% + 0px)',
+                transform: isChat ? 'translateX(0)' : 'translateX(0)' // using left for simplicity
+              }}
+            />
+
             <button
               onClick={() => handleItemClick('chatbot')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${
-                // We can't easily know current view here without prop, but we can assume logic or just style as buttons
-                'bg-white text-blue-600 shadow-sm'
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors z-10 relative ${isChat ? 'text-blue-600' : 'text-white/70 hover:text-white'
                 }`}
             >
-              <MessageCircle size={16} /> AI Chat
+              <MessageCircle size={18} /> AI Chat
             </button>
             <button
               onClick={() => handleItemClick('home')}
-              className="flex-1 py-2 px-3 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 flex items-center justify-center gap-2 transition-all"
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors z-10 relative ${!isChat ? 'text-blue-600' : 'text-white/70 hover:text-white'
+                }`}
             >
-              <LayoutGrid size={16} /> Classic
+              <LayoutGrid size={18} /> Classic
             </button>
           </div>
         </div>

@@ -74,20 +74,7 @@ const CounterInterface: React.FC<CounterInterfaceProps> = ({
   const incrementValues = [1, 5, 10, 25, 50, 100];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      {/* Header */}
-      <div className={`flex items-center justify-between px-6 py-4 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-        <button onClick={onMenuOpen} className="p-2">
-          <Menu size={24} className={isDark ? 'text-gray-300' : 'text-gray-700'} />
-        </button>
-        <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Expense Tracker</h1>
-        <div className="flex items-center">
-          <span className={`text-sm mr-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Balance:</span>
-          <span className={`text-sm font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {currency}{Math.abs(balance).toFixed(2)}
-          </span>
-        </div>
-      </div>
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} pt-4`}>
 
       {/* Amount Display */}
       <div className="text-center py-8">

@@ -272,6 +272,7 @@ function App() {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onNavigate={handleMenuNavigate}
+        currentView={currentView}
       />
 
       <BulkImportModal
