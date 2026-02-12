@@ -8,9 +8,10 @@ interface NavBarProps {
     onMenuOpen: () => void;
     balance: number;
     currency: string;
+    onImportClick: () => void;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ currentView, onNavigate, onMenuOpen, balance, currency }) => {
+const NavBar: React.FC<NavBarProps> = ({ currentView, onNavigate, onMenuOpen, balance, currency, onImportClick }) => {
     const { theme, toggleTheme } = useTheme();
     const isDark = theme === 'dark';
 
@@ -21,32 +22,41 @@ const NavBar: React.FC<NavBarProps> = ({ currentView, onNavigate, onMenuOpen, ba
             }`}>
             <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
 
-                {/* Left: Menu Trigger */}
-                <button
-                    onClick={onMenuOpen}
-                    className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-                        }`}
-                >
-                    <Menu size={24} />
-                </button>
+                {/* Left: Menu & Branding */}
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={onMenuOpen}
+                        className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                            }`}
+                    >
+                        <Menu size={24} />
+                    </button>
 
-                {/* Center: FinMate Branding */}
-                <div className="flex items-center gap-2 absolute left-1/2 transform -translate-x-1/2">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-blue-500 blur-lg opacity-20 animate-pulse"></div>
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-tr from-blue-600 to-purple-600 shadow-lg text-white font-bold`}>
-                            FM
-                        </div>
+                    {/* FinMate Branding */}
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="/logo.png"
+                            alt="FinMate"
+                            className="h-10 w-auto object-contain hover:scale-105 transition-transform duration-300"
+                        />
+                        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight font-sans">
+                            FinMate
+                        </span>
                     </div>
-                    <span className="hidden sm:block text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
-                        FinMate
-                    </span>
                 </div>
 
                 {/* Right: Actions */}
                 <div className="flex items-center gap-3">
-                    {/* Balance Display */}
-                    <div className={`hidden sm:flex flex-col items-end mr-2 px-3 py-1 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50/80'}`}>
+                    {/* Magic Import Button (Visible on md+) */}
+                    <button
+                        onClick={onImportClick}
+                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold border border-purple-200 dark:border-purple-800 transition-all hover:scale-105"
+                    >
+                        <Sparkles size={14} /> Import
+                    </button>
+
+                    {/* Balance Display - Visible on all screens now */}
+                    <div className={`flex flex-col items-end mr-2 px-3 py-1 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-50/80'}`}>
                         <span className={`text-[10px] uppercase font-bold tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                             Balance
                         </span>

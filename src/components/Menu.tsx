@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { ArrowLeft, MessageCircle, DollarSign, Clock, Info, TrendingUp, Settings, X, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MessageCircle, DollarSign, Clock, Info, TrendingUp, Settings, X, ShieldCheck, LayoutGrid, Sparkles } from 'lucide-react';
 
 interface MenuProps {
   isOpen: boolean;
@@ -9,7 +9,9 @@ interface MenuProps {
 }
 
 const menuItems = [
-  { id: 'chatbot', label: 'Home', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
+  { id: 'chatbot', label: 'AI Chat', icon: MessageCircle, description: 'Track expenses with AI chat & voice' },
+  { id: 'home', label: 'Classic View', icon: LayoutGrid, description: 'Standard expense tracking interface' },
+  { id: 'import', label: 'Magic Import', icon: Sparkles, description: 'Parse text into transactions' },
   { id: 'currency', label: 'Currency Selection', icon: DollarSign, description: 'Choose your preferred currency' },
   { id: 'history', label: 'Transaction History', icon: Clock, description: 'View all your transactions' },
   { id: 'budgets', label: 'Monthly Budgets', icon: TrendingUp, description: 'Manage spending limits' },

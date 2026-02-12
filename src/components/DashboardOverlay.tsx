@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { X, TrendingUp, AlertTriangle, CheckCircle, CreditCard, ShieldCheck } from 'lucide-react';
+import { X, TrendingUp, AlertTriangle, CheckCircle, CreditCard, ShieldCheck, Sparkles as SparklesIcon } from 'lucide-react';
 import { useAutonomousFinance } from '../hooks/useAutonomousFinance';
 import { Transaction, CATEGORY_META } from '../types';
+import { PredictionEngine } from '../services/PredictionEngine';
 
 interface DashboardOverlayProps {
     isOpen: boolean;
@@ -14,8 +15,9 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
     const { subscriptions, health, loading } = useAutonomousFinance(transactions);
     const [visible, setVisible] = useState(false);
     const [animating, setAnimating] = useState(false);
+    const [predictionDays, setPredictionDays] = useState(30);
 
-    // Animation logic similar to Menu
+    // Animation logic
     useEffect(() => {
         if (isOpen) {
             setVisible(true);
@@ -29,6 +31,11 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
         }
     }, [isOpen]);
 
+    // Cleanup prediction days on close
+    useEffect(() => {
+        if (!isOpen) setPredictionDays(30);
+    }, [isOpen]);
+
     if (!visible) return null;
 
     // Health Score Color
@@ -37,6 +44,15 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
         if (score >= 50) return 'text-amber-500';
         return 'text-red-500';
     };
+
+    // Calculate Prediction
+    const currentBalance = transactions.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0);
+    const prediction = health ? PredictionEngine.predictFutureBalance(
+        currentBalance,
+        transactions,
+        subscriptions,
+        predictionDays
+    ) : null;
 
     // SVG Circle
     const radius = 50;
@@ -51,7 +67,7 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
                 onClick={onClose}
             />
 
-            {/* Modal Panel - Centered, Scale In */}
+            {/* Modal Panel */}
             <div className={`relative w-full max-w-lg bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 ease-out border border-white/20 ${animating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}>
 
                 {/* Header */}
@@ -67,7 +83,7 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
                     </button>
                 </div>
 
-                {/* Content - Scrollable if needed */}
+                {/* Content */}
                 <div className="p-6 overflow-y-auto max-h-[80vh] space-y-6">
 
                     {/* 1. Health Score Card */}
@@ -113,6 +129,63 @@ const DashboardOverlay: React.FC<DashboardOverlayProps> = ({ isOpen, onClose, tr
                             </div>
                         </div>
                     </div>
+
+                    {/* 1.5 Future Crystal Ball */}
+                    {health && (
+                        <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white relative overflow-hidden ring-1 ring-white/10 shadow-xl">
+                            {/* Background Effects */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -mr-20 -mt-20 animate-pulse"></div>
+                            <div className="absolute bottom-0 left-0 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl -ml-10 -mb-10"></div>
+
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <SparklesIcon className="text-purple-300" size={20} />
+                                    <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-200 to-white">
+                                        Future Crystal Ball
+                                    </h3>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Result Display */}
+                                    <div className="text-center space-y-2">
+                                        <p className="text-purple-200 text-sm font-medium">
+                                            In {predictionDays} days, your balance will be:
+                                        </p>
+                                        <div className={`text-4xl font-bold tracking-tight transition-all duration-500 ${prediction?.riskLevel === 'high' ? 'text-red-400' :
+                                                prediction?.riskLevel === 'medium' ? 'text-amber-300' : 'text-emerald-300'
+                                            }`}>
+                                            {currency}{prediction?.predictedBalance.toFixed(2) || '---'}
+                                        </div>
+                                        <p className="text-xs text-indigo-200/80 max-w-[280px] mx-auto leading-relaxed">
+                                            {prediction?.analysis || "Gathering enough data to predict..."}
+                                        </p>
+                                    </div>
+
+                                    {/* Slider Control */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-xs text-indigo-300 font-medium px-1">
+                                            <span>7 Days</span>
+                                            <span>14 Days</span>
+                                            <span>30 Days</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="7"
+                                            max="30"
+                                            value={predictionDays}
+                                            onChange={(e) => setPredictionDays(parseInt(e.target.value))}
+                                            className="w-full h-2 bg-indigo-950/50 rounded-lg appearance-none cursor-pointer accent-purple-400 hover:accent-purple-300 transition-all"
+                                        />
+                                        <div className="flex justify-center">
+                                            <span className="bg-purple-500/20 text-purple-200 text-[10px] font-bold px-2 py-1 rounded-full border border-purple-500/30">
+                                                {predictionDays} DAYS INTO THE FUTURE
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* 2. Subscriptions */}
                     <div>

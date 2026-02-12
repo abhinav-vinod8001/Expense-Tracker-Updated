@@ -13,6 +13,8 @@ import ChatBot from './components/ChatBot';
 import BudgetView from './components/BudgetView';
 import DashboardOverlay from './components/DashboardOverlay';
 import NavBar from './components/NavBar';
+import BulkImportModal from './components/BulkImportModal';
+import { ExtractedTransaction } from './services/SmartImport';
 
 const initialState: AppState = {
   transactions: [],
@@ -37,6 +39,7 @@ function App() {
   const { theme } = useTheme();
 
   const [persistChat, setPersistChat] = useLocalStorage<boolean>('expense_tracker_persist_chat', true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Initialize budgets if not present (ensure it's an array)
   useEffect(() => {
@@ -83,6 +86,8 @@ function App() {
   const handleMenuNavigate = (section: string) => {
     if (section === 'dashboard') {
       setIsDashboardOpen(true);
+    } else if (section === 'import') {
+      setIsImportModalOpen(true);
     } else {
       if (currentView === section || isTransitioning) return; // Keep transition logic for non-dashboard views
       setIsTransitioning(true);
@@ -139,6 +144,30 @@ function App() {
       budgets: (prev.budgets || []).filter(b => b.id !== id)
     }));
   }, [setAppState]);
+
+  const handleBulkImport = (extracted: ExtractedTransaction[]) => {
+    const newTransactions: Transaction[] = extracted.map((t, index) => ({
+      id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+      amount: t.amount,
+      type: t.type,
+      category: t.category as any,
+      description: t.description,
+      date: t.date || new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+      timestamp: t.date ? new Date(t.date).getTime() : Date.now(),
+    }));
+
+    setAppState(prev => {
+      const updatedTransactions = [...newTransactions, ...prev.transactions];
+      const delta = newTransactions.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0);
+
+      return {
+        ...prev,
+        transactions: updatedTransactions,
+        balance: prev.balance + delta
+      };
+    });
+  };
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -233,6 +262,7 @@ function App() {
         onMenuOpen={() => setIsMenuOpen(true)}
         balance={appState.balance}
         currency={appState.currency}
+        onImportClick={() => setIsImportModalOpen(true)}
       />
 
       <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
@@ -242,6 +272,13 @@ function App() {
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onNavigate={handleMenuNavigate}
+      />
+
+      <BulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleBulkImport}
+        currency={appState.currency}
       />
 
       <DashboardOverlay
